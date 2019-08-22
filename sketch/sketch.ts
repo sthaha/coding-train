@@ -5,7 +5,7 @@ function randomInRange(min : number, max : number) {
 
 class Neuron {
   weights : number[]
-  learningRate = 0.1
+  learningRate = 0.01
 
   constructor(size : number) {
     this.weights = Array.from({length: size}, () => randomInRange(-1, 1))
@@ -13,7 +13,7 @@ class Neuron {
 
 
   activation(input: number) {
-    return input >= 0  ? 1 : -1 ;
+    return input >= 0 ? 1 : -1 ;
   }
 
   guess(inputs : number[] ): number {
@@ -25,8 +25,10 @@ class Neuron {
   train(inputs : number[], target : number) {
     let guess = this.guess(inputs);
     let err = target - guess;
-    console.log("input", inputs, " got:", guess, "target:", target)
-    this.weights = this.weights.map( w => w * err )
+
+    console.log("input", inputs, " got:", guess, "target:", target, this.weights)
+    this.weights = this.weights.map((w, idx) => w + inputs[idx] * err * this.learningRate )
+    console.log("weights: ", this.weights)
 
   }
 }
@@ -36,7 +38,6 @@ type Cord = { x : number, y : number, label: number }
 class Points {
   size : number
   cords : Cord[]
-  labels : number[]
 
   constructor(size : number) {
     this.size = size;
@@ -68,22 +69,39 @@ class Points {
         fill(0)
       }
 
-      ellipse(c.x, c.y, 8, 8)
+      ellipse(c.x, c.y, 10, 10)
     })
+  }
+
+  markGuess(i : number, correct :  boolean) {
+    if (correct) {
+      fill(0, 244, 0)
+    } else {
+      fill(244, 0, 0)
+    }
+
+    noStroke()
+    let c = this.cords[i]
+    ellipse(c.x, c.y, 5, 5)
+
   }
 }
 
 let points: Points;
 let neuron: Neuron;
+let size = 80
+
 function setup() {
   createCanvas(800, 800)
   neuron = new Neuron(2)
 
-  points = new Points(10)
-  for (let i = 0, len = 10; i < len; i++) {
+  points = new Points(size)
+  for (let i = 0; i < size; i++) {
     let c = points.at(i)
     neuron.train([c.x, c.y], c.label)
   }
+  size *=2
+  points = new Points(size)
 
 }
 
@@ -96,32 +114,11 @@ function draw() {
   stroke(0)
   line(0,0, width, height)
   points.draw()
+
+  for (let i = 0; i < size; i++) {
+    let c = points.at(i)
+    let got = neuron.guess([c.x, c.y])
+    points.markGuess(i, got == c.label)
+  }
 }
 
-
-// // const s = ( sketch : any ) => {
-//
-//   let x = 100;
-//   let y = 100;
-//   let morph: Morph;
-//
-//   sketch.setup = () => {
-//     console.log("window width:", sketch.windowWidth);
-//     sketch.createCanvas(sketch.windowWidth, 200);
-//     morph = new Morph();
-//     morph.setup();
-//
-//   };
-//
-//   sketch.draw = () => {
-//     sketch.background(0);
-//     sketch.fill(255);
-//     sketch.rect(x,y,50,50);
-//     morph.draw();
-//   };
-// };
-//
-// let myp5 = new p5(s, document.getElementById("d1"));
-//
-// // let myp52 = new p5(s, "d2");
-//
