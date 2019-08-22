@@ -103,7 +103,7 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
 function draw() {
-    background(100);
+    background(80);
     morph.draw();
 }
 //# sourceMappingURL=build.js.map
