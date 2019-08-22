@@ -1,14 +1,10 @@
 
-function randomInRange(min : number, max : number) {
-  return Math.random() * (max - min + 1) + min
-}
-
 class Neuron {
   weights : number[]
   learningRate = 0.01
 
   constructor(size : number) {
-    this.weights = Array.from({length: size}, () => randomInRange(-1, 1))
+    this.weights = Array.from({length: size}, () => random(-1, 1))
   }
 
 
