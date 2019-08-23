@@ -1,12 +1,13 @@
 
 class Neuron {
+  size : number
   weights : number[]
   learningRate = 0.01
 
   constructor(size : number) {
+    this.size = size;
     this.weights = Array.from({length: size}, () => random(-1, 1))
   }
-
 
   activation(input: number) {
     return input >= 0 ? 1 : -1 ;
@@ -22,9 +23,9 @@ class Neuron {
     let guess = this.guess(inputs);
     let err = target - guess;
 
-    console.log("input", inputs, " got:", guess, "target:", target, this.weights)
+    //console.log("input", inputs, " got:", guess, "target:", target, this.weights)
     this.weights = this.weights.map((w, idx) => w + inputs[idx] * err * this.learningRate )
-    console.log("weights: ", this.weights)
+    //console.log("weights: ", this.weights)
 
   }
 }
@@ -86,21 +87,27 @@ class Points {
 let points: Points;
 let neuron: Neuron;
 let size = 80
+let training : Points;
 
 function setup() {
   createCanvas(800, 800)
   neuron = new Neuron(2)
-
+  training = new Points(size * 2)
   points = new Points(size)
-  for (let i = 0; i < size; i++) {
-    let c = points.at(i)
-    neuron.train([c.x, c.y], c.label)
-  }
-  size *=2
-  points = new Points(size)
-
 }
 
+let trainIndex = 0;
+function trainNext(n : number) {
+  let end = min(trainIndex + n, training.size)
+
+  console.log("training ", n)
+  for (let i = trainIndex; i < end; i++) {
+    let c = training.at(i)
+    console.log(" ... training ", i)
+    neuron.train([c.x, c.y], c.label)
+  }
+  trainIndex = end == training.size ? 0 : end
+}
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
@@ -108,13 +115,21 @@ function windowResized() {
 function draw() {
   background(80);
   stroke(0)
-  line(0,0, width, height)
+  line(0,0, 800, 800)
   points.draw()
 
   for (let i = 0; i < size; i++) {
     let c = points.at(i)
     let got = neuron.guess([c.x, c.y])
+    let correct = got == c.label
     points.markGuess(i, got == c.label)
+    if (!correct) {
+      trainNext(5)
+      neuron.train([c.x, c.y], c.label)
+    }
   }
 }
 
+function mousePressed() {
+  points.randomize()
+}
