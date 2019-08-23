@@ -30,6 +30,9 @@ class Neuron {
   }
 }
 
+function yPoint(x) {
+  return 0.75 * x + 8
+}
 type Cord = { x : number, y : number, label: number }
 
 class Points {
@@ -41,12 +44,16 @@ class Points {
     this.randomize()
   }
 
+  labelFor(x : number, y : number) : number {
+    //return y >= yPoint(x) ? 1 : -1
+    return y >= x ? 1 : -1
+  }
+
   randomize() {
     this.cords = Array.from({length: this.size}, () => {
-      let x = Math.random() * width
-      let y = Math.random() * height
-      let label = x >= y ? 1 : -1
-
+      let x = random(-1, 1)
+      let y = random(-1, 1)
+      let label = this.labelFor(x, y)
       return {x, y, label}
     })
 
@@ -54,7 +61,7 @@ class Points {
   }
 
   at(i : number) {
-    return  this.cords[i]
+    return this.cords[i]
   }
 
   draw() {
@@ -66,7 +73,10 @@ class Points {
         fill(0)
       }
 
-      ellipse(c.x, c.y, 10, 10)
+      let px = map(c.x, -1, 1, 0, width)
+      let py = map(c.y, -1, 1, height, 0)
+
+      ellipse(px, py, 10, 10)
     })
   }
 
@@ -79,8 +89,11 @@ class Points {
 
     noStroke()
     let c = this.cords[i]
-    ellipse(c.x, c.y, 5, 5)
 
+    let px = map(c.x, -1, 1, 0, width)
+    let py = map(c.y, -1, 1, height, 0)
+
+    ellipse(px, py, 5, 5)
   }
 }
 
@@ -90,7 +103,7 @@ let size = 80
 let training : Points;
 
 function setup() {
-  createCanvas(800, 800)
+  createCanvas(windowWidth, windowHeight)
   neuron = new Neuron(2)
   training = new Points(size * 2)
   points = new Points(size)
@@ -115,7 +128,7 @@ function windowResized() {
 function draw() {
   background(80);
   stroke(0)
-  line(0,0, 800, 800)
+  line(0, height, width, 0)
   points.draw()
 
   for (let i = 0; i < size; i++) {
@@ -124,7 +137,7 @@ function draw() {
     let correct = got == c.label
     points.markGuess(i, got == c.label)
     if (!correct) {
-      trainNext(5)
+      trainNext(15)
       neuron.train([c.x, c.y], c.label)
     }
   }
