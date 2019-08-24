@@ -1,4 +1,3 @@
-
 class Neuron {
   size : number
   weights : number[]
@@ -30,13 +29,11 @@ class Neuron {
 }
 
 function yForX(x : number) {
-  return -0.3 * x + -0.2
+  return 0.35 * x + -0.2
 }
 
 function mapToScreen(x : number , y  : number) {
-
   //console.log("  mapping: ", x, y)
-
   return {
     x : map(x, -1, 1, 0, width),
     y : map(y, -1, 1, height, 0),
@@ -44,11 +41,12 @@ function mapToScreen(x : number , y  : number) {
 }
 
 
-type Cord = { x : number, y : number, bias: number, label: number }
+type Point = { x : number, y : number, bias: number, label: number }
 
 class Points {
   size : number
-  cords : Cord[]
+  cords : Point[]
+  training: boolean
 
   constructor(size : number) {
     this.size = size;
@@ -76,18 +74,40 @@ class Points {
     return this.cords[i]
   }
 
+  fill(label : number) {
+    if (this.training) {
+      if (label == 1) {
+        fill(40, 40, 45)
+      } else {
+        fill(35, 35, 38)
+      }
+      return
+    }
+
+    if (label == 1) {
+      fill(200, 220, 255)
+    } else {
+      fill(100, 100, 187)
+    }
+  }
+
   draw() {
     stroke(0)
+
     this.cords.forEach(c => {
-      if (c.label == 1 ) {
-        fill(200, 220, 255)
-      } else {
-        fill(100, 100, 187)
-      }
+      this.fill(c.label)
 
       let p = mapToScreen(c.x, c.y)
       ellipse(p.x, p.y, 12, 12)
     })
+  }
+
+  highlight(i : number) {
+    let c  = this.cords[i]
+    fill(200, 250, 220)
+    let p = mapToScreen(c.x, c.y)
+    ellipse(p.x, p.y, 18, 18)
+
   }
 
   markGuess(i : number, correct :  boolean) {
@@ -104,47 +124,54 @@ class Points {
   }
 }
 
-let testSet: Points;
 let neuron: Neuron;
-let size = 50
+let size = 150
 let training : Points;
+let testSet: Points;
 
 function setup() {
   createCanvas(windowWidth, windowHeight)
+
   training = new Points(size * 8)
+  training.training = true
+
   testSet = new Points(size)
-
-  neuron = new Neuron(3)
+  neuron = new Neuron(3);
 }
-
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+let idx = 0
 function draw() {
   background(30);
   drawAxis()
-  drawLine()
+  training.draw()
+
+  drawActualDivider()
   drawGuessLine()
-
-
   testSet.draw()
 
+  let allCorrect = true
   for (let i = 0; i < size; i++) {
     let c = testSet.at(i)
     let got = neuron.guess([c.x, c.y, c.bias])
     let correct = got == c.label
+    allCorrect  =  allCorrect && correct;
     testSet.markGuess(i, correct)
-    if (!correct) {
-      trainNext(10)
-      //neuron.train([c.x, c.y, c.bias], c.label)
-    }
   }
+
+  if ( idx == 0 && !allCorrect) {
+    trainNext(10)
+  }
+
+  idx = (idx +1) % 5;
 }
 
 function mousePressed() {
   testSet.randomize()
+  training.randomize()
 }
 
 let trainIndex = 0;
@@ -154,6 +181,7 @@ function trainNext(n : number) {
   console.log("training ", n)
   for (let i = trainIndex; i < end; i++) {
     let c = training.at(i)
+    training.highlight(i)
     console.log(" ... training ", i)
     neuron.train([c.x, c.y, c.bias], c.label)
   }
@@ -169,7 +197,7 @@ function drawAxis() {
   let xLeft = mapToScreen(-1,0)
   let xRight = mapToScreen(1,0)
 
-  stroke(120,220,140)
+  stroke(120,120,140)
   strokeWeight(1)
   line(yTop.x, yTop.y, yBottom.x, yBottom.y)
   line(xLeft.x, xLeft.y, xRight.x, xRight.y)
@@ -184,15 +212,25 @@ function drawAxisWithoutMapping() {
 }
 
 function drawGuessLine() {
-  //stroke(244,104,100)
+  stroke(104,184,240)
 
-  //let p1 = mapToScreen(-1, yForX(-1));
-  //let p2 = mapToScreen(1, yForX(1));
-  //line(p1.x, p1.y, p2.x, p2.y)
+  // ax + by + c = 0 is the line that neuron is building
+  // thus a = w0, b = w1, c = w2
+  // so y = -w0/w1 x - w2/w1
+  let w = neuron.weights;
+
+  let m = -w[0]/w[1];
+  let b = -w[2]/w[1];
+  let f = (x : number) => m * x + b;
+
+  let p1 = mapToScreen(-1, f(-1));
+  let p2 = mapToScreen(1, f(1));
+  line(p1.x, p1.y, p2.x, p2.y)
+  //console.log("guess: m: ", m, "b: ", b)
 }
 
-function drawLine() {
-  stroke(244,204,0)
+function drawActualDivider() {
+  stroke(204,244,0)
 
   let p1 = mapToScreen(-1, yForX(-1));
   let p2 = mapToScreen(1, yForX(1));
