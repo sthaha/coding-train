@@ -2,11 +2,11 @@ function yForX(x : number) {
   return 0.35 * x + -0.2
 }
 
-function mapToScreen(x : number , y  : number) {
+function mapToScreen(p: p5, x : number , y  : number) {
   //console.log("  mapping: ", x, y)
   return {
-    x : map(x, -1, 1, 0, width),
-    y : map(y, -1, 1, height, 0),
+    x : p.map(x, -1, 1, 0, p.width),
+    y : p.map(y, -1, 1, p.height, 0),
   }
 }
 
@@ -17,8 +17,10 @@ class Points {
   size : number
   cords : Point[]
   training: boolean
+  p : any
 
-  constructor(size : number) {
+  constructor(size : number, p : p5) {
+    this.p = p
     this.size = size;
     this.randomize()
   }
@@ -29,8 +31,8 @@ class Points {
 
   randomize() {
     this.cords = Array.from({length: this.size}, () => {
-      let x = random(-1, 1)
-      let y = random(-1, 1)
+      let x = this.p.random(-1, 1)
+      let y = this.p.random(-1, 1)
       let label = this.labelFor(x, y)
       // bias is always 1.0 and its weight needs to be learned
       let bias = 1.0
@@ -47,50 +49,50 @@ class Points {
   fill(label : number) {
     if (this.training) {
       if (label == 1) {
-        fill(40, 40, 45)
+        this.p.fill(40, 40, 45)
       } else {
-        fill(35, 35, 38)
+        this.p.fill(35, 35, 38)
       }
       return
     }
 
     if (label == 1) {
-      fill(200, 220, 255)
+      this.p.fill(200, 220, 255)
     } else {
-      fill(100, 100, 187)
+      this.p.fill(100, 100, 187)
     }
   }
 
   draw() {
-    stroke(0)
+    this.p.stroke(0)
 
     this.cords.forEach(c => {
       this.fill(c.label)
 
-      let p = mapToScreen(c.x, c.y)
-      ellipse(p.x, p.y, 12, 12)
+      let p = mapToScreen(this.p, c.x, c.y)
+      this.p.ellipse(p.x, p.y, 12, 12)
     })
   }
 
   highlight(i : number) {
     let c  = this.cords[i]
-    fill(200, 250, 220)
-    let p = mapToScreen(c.x, c.y)
-    ellipse(p.x, p.y, 18, 18)
+    this.p.fill(200, 250, 220)
+    let p = mapToScreen(this.p, c.x, c.y)
+    this.p.ellipse(p.x, p.y, 18, 18)
 
   }
 
   markGuess(i : number, correct :  boolean) {
     if (correct) {
-      fill(0, 244, 122)
+      this.p.fill(0, 244, 122)
     } else {
-      fill(244, 0, 0)
+      this.p.fill(244, 0, 0)
     }
 
-    noStroke()
+    this.p.noStroke()
     let c = this.cords[i]
-    let p = mapToScreen(c.x, c.y)
-    ellipse(p.x, p.y, 5, 5)
+    let p = mapToScreen(this.p, c.x, c.y)
+    this.p.ellipse(p.x, p.y, 5, 5)
   }
 }
 

@@ -3,8 +3,8 @@ class Neuron {
   weights : number[]
   learningRate = 0.01
 
-  constructor(size : number) {
-    this.weights = Array.from({length: size}, () => random(-1, 1))
+  constructor(size : number, weightFn : () => number ){
+    this.weights = Array.from({length: size}, weightFn)
   }
 
   activation(input: number) {
