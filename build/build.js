@@ -1,51 +1,3 @@
-class Morph {
-    setup() {
-        this.shapes = [];
-        this.currentShape = 0;
-        this.shapes.push({ points: Shapes.circle(100), color: color('#009CDF') });
-        this.shapes.push({ points: Shapes.circle(150), color: color(255, 204, 0) });
-        this.shapes.push({ points: Shapes.square(50), color: color(175, 100, 220) });
-        this.morph = new Array();
-        let highestCount = 0;
-        for (var i = 0; i < this.shapes.length; i++) {
-            highestCount = Math.max(highestCount, this.shapes[i].points.length);
-        }
-        for (var i = 0; i < highestCount; i++) {
-            this.morph.push(new p5.Vector());
-        }
-    }
-    recalc() {
-        var totalDistance = 0;
-        const points = this.shapes[this.currentShape].points;
-        for (var i = 0; i < points.length; i++) {
-            var v1 = points[i];
-            var v2 = this.morph[i];
-            v2.lerp(v1, 0.1);
-            totalDistance += p5.Vector.dist(v1, v2);
-        }
-        if (totalDistance < 0.1) {
-            this.currentShape++;
-            if (this.currentShape >= this.shapes.length) {
-                this.currentShape = 0;
-            }
-        }
-    }
-    draw() {
-        this.recalc();
-        const color = this.shapes[this.currentShape].color;
-        const points = this.shapes[this.currentShape].points;
-        translate(width / 2, height / 2);
-        strokeWeight(4);
-        beginShape();
-        noFill();
-        stroke(color);
-        for (var i = 0; i < points.length; i++) {
-            var v = this.morph[i];
-            vertex(v.x, v.y);
-        }
-        endShape(CLOSE);
-    }
-}
 class Neuron {
     constructor(size, weightFn) {
         this.learningRate = 0.01;
@@ -63,6 +15,123 @@ class Neuron {
         let guess = this.guess(inputs);
         let err = target - guess;
         this.weights = this.weights.map((w, idx) => w + inputs[idx] * err * this.learningRate);
+    }
+}
+class Plotter {
+    constructor(p) {
+        this.p = p;
+    }
+    set points(pts) {
+        this.pts = pts;
+    }
+    set guess(fn) {
+        this.guessFn = fn;
+    }
+    set guessLine(fn) {
+        this.guessLineFn = fn;
+    }
+    draw() {
+        this.p.background(17, 17, 17);
+        this.drawAxis();
+        this.drawLineOfSeparation();
+        this.drawGuessLine();
+        this.plotPoints();
+        this.plotGuesses();
+    }
+    drawLineOfSeparation() {
+        let left = this.toScreen({ x: -1, y: yForX(-1) });
+        let right = this.toScreen({ x: 1, y: yForX(1) });
+        this.p.stroke(104, 144, 0);
+        this.p.strokeWeight(2);
+        this.p.line(left.x, left.y, right.x, right.y);
+    }
+    drawGuessLine() {
+        const line = this.guessLineFn();
+        let left = this.toScreen({ x: -1, y: -line.slope + line.yIntercept });
+        let right = this.toScreen({ x: 1, y: line.slope + line.yIntercept });
+        this.p.stroke(204, 244, 0);
+        this.p.strokeWeight(2);
+        this.p.line(left.x, left.y, right.x, right.y);
+    }
+    drawAxis() {
+        let yTop = this.toScreen({ x: 0, y: -1 });
+        let yBottom = this.toScreen({ x: 0, y: 1 });
+        let xLeft = this.toScreen({ x: -1, y: 0 });
+        let xRight = this.toScreen({ x: 1, y: 0 });
+        this.p.stroke(120, 120, 140);
+        this.p.strokeWeight(1);
+        this.p.line(yTop.x, yTop.y, yBottom.x, yBottom.y);
+        this.p.line(xLeft.x, xLeft.y, xRight.x, xRight.y);
+    }
+    plotPoints() {
+        this.pts.forEach(pt => this.plot(pt));
+    }
+    plot(pt) {
+        const cords = this.toScreen(pt.cords);
+        this.p.stroke(0);
+        this.fill(pt.label);
+        this.p.ellipse(cords.x, cords.y, 20, 20);
+    }
+    get wrongGuessCount() {
+        return this.wrongGuesses;
+    }
+    plotGuesses() {
+        this.wrongGuesses = 0;
+        this.pts.forEach(pt => this.plotGuess(pt));
+    }
+    plotGuess(pt) {
+        const guess = this.guessFn(pt.raw);
+        const correct = guess == pt.label;
+        if (!correct) {
+            this.wrongGuesses += 1;
+            return;
+        }
+        this.p.strokeWeight(0);
+        this.fillRightGuess(pt.label);
+        const scr = this.toScreen(pt.cords);
+        this.p.ellipse(scr.x, scr.y, 16, 16);
+    }
+    fill(label) {
+        if (label == 1) {
+            this.p.fill(244, 185, 7);
+        }
+        else {
+            this.p.fill(25, 118, 222);
+        }
+    }
+    fillRightGuess(label) {
+        if (label == 1) {
+            this.p.fill(184, 145, 7);
+        }
+        else {
+            this.p.fill(5, 58, 162);
+        }
+    }
+    toScreen(c) {
+        const x = this.p.map(c.x, -1, 1, 0, this.p.width);
+        const y = this.p.map(c.y, -1, 1, this.p.height, 0);
+        return { x, y };
+    }
+}
+function labelFor(x, y) {
+    return y > yForX(x) ? 1 : -1;
+}
+class xPoint {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    get raw() {
+        return [this.x, this.y];
+    }
+    get cords() {
+        return {
+            x: this.x,
+            y: this.y,
+        };
+    }
+    get label() {
+        return labelFor(this.x, this.y);
     }
 }
 function yForX(x) {
@@ -139,47 +208,44 @@ class Points {
         this.p.ellipse(p.x, p.y, 5, 5);
     }
 }
-class Shapes {
-    static circle(size) {
-        const points = new Array();
-        for (var angle = 0; angle < 360; angle += 9) {
-            var v = p5.Vector.fromAngle(radians(angle - 135));
-            v.mult(size);
-            points.push(v);
+function utils(p) {
+    const generateRandomPoints = (n) => {
+        let points = [];
+        for (let i = 0; i < n; i++) {
+            points.push(new xPoint(p.random(-1, 1), p.random(-1, 1)));
         }
         return points;
-    }
-    static square(size) {
-        const points = new Array();
-        for (var x = -size; x < size; x += 10) {
-            points.push(createVector(x, -size));
-        }
-        for (var y = -size; y < size; y += 10) {
-            points.push(createVector(size, y));
-        }
-        for (var x = size; x > -size; x -= 10) {
-            points.push(createVector(x, size));
-        }
-        for (var y = size; y > -size; y -= 10) {
-            points.push(createVector(-size, y));
-        }
-        return points;
-    }
-    static star(x, y, radius1, radius2, npoints) {
-        var angle = TWO_PI / npoints;
-        var halfAngle = angle / 2.0;
-        const points = new Array();
-        for (var a = 0; a < TWO_PI; a += angle) {
-            var sx = x + cos(a) * radius2;
-            var sy = y + sin(a) * radius2;
-            points.push(createVector(sx, sy));
-            sx = x + cos(a + halfAngle) * radius1;
-            sy = y + sin(a + halfAngle) * radius1;
-            points.push(createVector(sx, sy));
-        }
-        return points;
-    }
+    };
+    return { generateRandomPoints, random: p.random };
 }
+const perceptron = (p) => {
+    const util = utils(p);
+    let graph;
+    let pts = util.generateRandomPoints(100);
+    let neuron;
+    p.setup = () => {
+        p.createCanvas(p.windowWidth, p.windowHeight);
+        graph = new Plotter(p);
+        neuron = new xNeuron(3, (_) => p.random(-1, 1));
+        graph.guess = (input) => neuron.guess(input);
+        graph.guessLine = () => neuron.lineOfSeparation;
+    };
+    p.windowResized = () => {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+    };
+    p.draw = () => {
+        graph.points = pts;
+        graph.draw();
+        if (graph.wrongGuessCount > 0) {
+            const train = util.generateRandomPoints(10);
+            train.forEach(pt => neuron.train(pt.raw, pt.label));
+        }
+    };
+    p.mousePressed = () => {
+        pts = util.generateRandomPoints(100);
+    };
+};
+const p = new p5(perceptron);
 const linearSeperable = (p) => {
     let neuron;
     let size = 150;
@@ -200,6 +266,7 @@ const linearSeperable = (p) => {
     p.draw = () => {
         p.background(30);
         drawAxis();
+        training.draw();
         drawActualDivider();
         drawGuessLine();
         testSet.draw();
@@ -226,6 +293,7 @@ const linearSeperable = (p) => {
         console.log("training ", n);
         for (let i = trainIndex; i < end; i++) {
             let c = training.at(i);
+            training.highlight(i);
             console.log(" ... training ", i);
             neuron.train([c.x, c.y, c.bias], c.label);
         }
@@ -264,5 +332,31 @@ const linearSeperable = (p) => {
         p.line(p1.x, p1.y, p2.x, p2.y);
     }
 };
-let x = new p5(linearSeperable);
+class xNeuron {
+    constructor(size, weightFn) {
+        this.LR = 0.001;
+        this.weights = Array.from({ length: size }, weightFn);
+    }
+    activation(res) {
+        return res > 0 ? 1 : -1;
+    }
+    guess(inputs) {
+        let res = [...inputs, 1.0]
+            .map((x, i) => this.weights[i] * x)
+            .reduce((a, x) => a + x);
+        return this.activation(res);
+    }
+    train(inputs, expected) {
+        const err = expected - this.guess(inputs);
+        const adj = [...inputs, 1.0];
+        this.weights = this.weights.map((w, i) => w + adj[i] * err * this.LR);
+        console.log(this.weights);
+    }
+    get lineOfSeparation() {
+        const [a, b, c] = [...this.weights];
+        const slope = -a / b;
+        const yIntercept = -c / b;
+        return { slope, yIntercept };
+    }
+}
 //# sourceMappingURL=build.js.map
