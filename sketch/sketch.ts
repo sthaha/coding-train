@@ -2,9 +2,9 @@
 const matrix = (p :p5) => {
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight)
+
     let m = new Matrix(3 ,3)
-    console.log("m size:", m.size)
-    console.log("m values:", m.values)
+    m.dump()
 
     let v = [
       [1, 0, 0],
@@ -12,20 +12,13 @@ const matrix = (p :p5) => {
       [0, 0, 1],
     ]
     let m1 = Matrix.fromValues(v)
-
-    console.log("m1")
-    console.log(m1.size)
-    console.table(m1.values)
+    m1.dump()
 
     let s = m1.scale(10)
-    console.log("scaled ...")
-    console.log(s.size)
-    console.table(s.values)
+    s.dump("m1 x 10")
 
     let sum = m1.add(s)
-    console.log("sum ...")
-    console.log(sum.size)
-    console.table(sum.values)
+    s.dump("m1 + scaled")
 
     const v3x2 = [
       [1, 3],
@@ -41,18 +34,13 @@ const matrix = (p :p5) => {
     let m3x2 = Matrix.fromValues(v3x2)
     let m2x2 = Matrix.fromValues(v2x2)
     let prod = m3x2.multiply(m2x2)
-
-    console.log("product ...")
-    console.log(prod.size)
-    console.table(prod.values)
-
+    prod.dump("3x2 X 2x2")
 
 
     let add5 = (x:number) => x+5
-    console.log("eached ...")
     console.log(prod.size)
     let eached = m2x2.each(add5)
-    console.table(eached.values)
+    eached.dump("eached ...")
 
     let zero3x3 = new  Matrix(3, 3)
     let indexedFn = () => {
@@ -61,21 +49,17 @@ const matrix = (p :p5) => {
       return zero3x3.each(one)
     }
     let indexed = indexedFn()
+    indexed.dump("indexed")
 
-    console.log("indexed ...")
-    console.log(indexed.size)
-    console.table(indexed.values)
-
-
-    console.log("initialized to ... 5")
     let init5 = Matrix.initialize(2, 2, 5)
-    console.log(init5.size)
-    console.table(init5.values)
+    init5.dump("intialized to : number 5")
 
-    console.log("initialized to ... fn")
-    let initFn = Matrix.initialize(2, 2, (x, i, j) => (i+1) * 100 + (j+1) * 10 + x)
-    console.log(initFn.size)
-    console.table(initFn.values)
+    let initedByFn = Matrix.initialize(2, 2, (x, i, j) => (i+1) * 100 + (j+1) * 10 + x)
+    initedByFn.dump("intiailized by Fn")
+
+
+    Matrix.fromValues([[1, 2 , 3]]).transpose().dump("1x3 transposed")
+    Matrix.fromValues([[1], [2], [3]]).transpose().dump("3x1 transposed")
 
   }
 

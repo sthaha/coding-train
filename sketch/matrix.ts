@@ -96,4 +96,21 @@ class Matrix {
     }
     return Matrix.fromValues(res)
   }
+
+  transpose(): Matrix {
+    let res : number[][] = []
+    for (let i = 0; i < this.c; i++) {
+      res[i] = []
+      for (let j = 0; j < this.r; j++) {
+        res[i][j] = this.values[j][i]
+      }
+    }
+    return Matrix.fromValues(res)
+  }
+
+  dump(txt: string = "Matrix") {
+    console.log(txt)
+    console.log(this.size)
+    console.table(this.values)
+  }
 }
