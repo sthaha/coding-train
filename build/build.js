@@ -88,6 +88,17 @@ class Matrix {
         m.values = v;
         return m;
     }
+    static initialize(rows, columns, initializer) {
+        let fn = typeof initializer == 'number' ? () => initializer : initializer;
+        let res = [];
+        for (let i = 0; i < rows; i++) {
+            res[i] = [];
+            for (let j = 0; j < columns; j++) {
+                res[i][j] = fn(0, i, j);
+            }
+        }
+        return Matrix.fromValues(res);
+    }
     constructor(rows, columns) {
         this.r = rows;
         this.c = columns;
@@ -134,6 +145,16 @@ class Matrix {
                 for (let k = 0; k < this.c; k++) {
                     res[i][j] += this.values[i][k] * other.values[k][j];
                 }
+            }
+        }
+        return Matrix.fromValues(res);
+    }
+    each(fn) {
+        let res = [];
+        for (let i = 0; i < this.r; i++) {
+            res[i] = [];
+            for (let j = 0; j < this.c; j++) {
+                res[i][j] = fn(this.values[i][j], i, j);
             }
         }
         return Matrix.fromValues(res);
@@ -265,11 +286,34 @@ const matrix = (p) => {
             [0, 1],
         ];
         let m3x2 = Matrix.fromValues(v3x2);
-        let m2x3 = Matrix.fromValues(v2x2);
-        let prod = m3x2.multiply(m2x3);
+        let m2x2 = Matrix.fromValues(v2x2);
+        let prod = m3x2.multiply(m2x2);
         console.log("product ...");
         console.log(prod.size);
         console.table(prod.values);
+        let add5 = (x) => x + 5;
+        console.log("eached ...");
+        console.log(prod.size);
+        let eached = m2x2.each(add5);
+        console.table(eached.values);
+        let zero3x3 = new Matrix(3, 3);
+        let indexedFn = () => {
+            let index = 1;
+            let one = () => index++;
+            return zero3x3.each(one);
+        };
+        let indexed = indexedFn();
+        console.log("indexed ...");
+        console.log(indexed.size);
+        console.table(indexed.values);
+        console.log("initialized to ... 5");
+        let init5 = Matrix.initialize(2, 2, 5);
+        console.log(init5.size);
+        console.table(init5.values);
+        console.log("initialized to ... fn");
+        let initFn = Matrix.initialize(2, 2, (x, i, j) => (i + 1) * 100 + (j + 1) * 10 + x);
+        console.log(initFn.size);
+        console.table(initFn.values);
     };
     p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);

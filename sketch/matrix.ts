@@ -1,3 +1,5 @@
+type EachFn = (x?:number, row?: number, column?: number) => number;
+
 class Matrix {
   r : number
   c : number
@@ -7,6 +9,20 @@ class Matrix {
     let m = new Matrix(v.length, v[0].length)
     m.values = v
     return m
+  }
+
+  static initialize(rows: number, columns: number, initializer : number|EachFn) : Matrix {
+    let fn : EachFn = typeof initializer == 'number' ? () => initializer : initializer
+
+    let res : number[][] = []
+    for (let i = 0; i < rows; i++) {
+      res[i] = []
+      for (let j = 0; j < columns; j++) {
+        res[i][j] = fn(0, i, j)
+      }
+    }
+    return Matrix.fromValues(res)
+
   }
 
   constructor(rows: number, columns: number) {
@@ -64,6 +80,18 @@ class Matrix {
         for (let k = 0; k < this.c; k++) {
           res[i][j] += this.values[i][k] * other.values[k][j]
         }
+      }
+    }
+    return Matrix.fromValues(res)
+  }
+
+  each(fn: EachFn) {
+    let res : number[][] = []
+
+    for (let i = 0; i < this.r; i++) {
+      res[i] = []
+      for (let j = 0; j < this.c; j++) {
+        res[i][j] = fn(this.values[i][j], i, j)
       }
     }
     return Matrix.fromValues(res)
