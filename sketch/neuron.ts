@@ -1,7 +1,7 @@
 class Neuron {
   size : number
   weights : number[]
-  learningRate = 0.01
+  learningRate = 0.001
 
   constructor(size : number, weightFn : () => number ){
     this.weights = Array.from({length: size}, weightFn)
