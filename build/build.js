@@ -1,51 +1,3 @@
-class Morph {
-    setup() {
-        this.shapes = [];
-        this.currentShape = 0;
-        this.shapes.push({ points: Shapes.circle(100), color: color('#009CDF') });
-        this.shapes.push({ points: Shapes.circle(150), color: color(255, 204, 0) });
-        this.shapes.push({ points: Shapes.square(50), color: color(175, 100, 220) });
-        this.morph = new Array();
-        let highestCount = 0;
-        for (var i = 0; i < this.shapes.length; i++) {
-            highestCount = Math.max(highestCount, this.shapes[i].points.length);
-        }
-        for (var i = 0; i < highestCount; i++) {
-            this.morph.push(new p5.Vector());
-        }
-    }
-    recalc() {
-        var totalDistance = 0;
-        const points = this.shapes[this.currentShape].points;
-        for (var i = 0; i < points.length; i++) {
-            var v1 = points[i];
-            var v2 = this.morph[i];
-            v2.lerp(v1, 0.1);
-            totalDistance += p5.Vector.dist(v1, v2);
-        }
-        if (totalDistance < 0.1) {
-            this.currentShape++;
-            if (this.currentShape >= this.shapes.length) {
-                this.currentShape = 0;
-            }
-        }
-    }
-    draw() {
-        this.recalc();
-        const color = this.shapes[this.currentShape].color;
-        const points = this.shapes[this.currentShape].points;
-        translate(width / 2, height / 2);
-        strokeWeight(4);
-        beginShape();
-        noFill();
-        stroke(color);
-        for (var i = 0; i < points.length; i++) {
-            var v = this.morph[i];
-            vertex(v.x, v.y);
-        }
-        endShape(CLOSE);
-    }
-}
 class Neuron {
     constructor(size, weightFn) {
         this.learningRate = 0.01;
@@ -137,47 +89,6 @@ class Points {
         let c = this.cords[i];
         let p = mapToScreen(this.p, c.x, c.y);
         this.p.ellipse(p.x, p.y, 5, 5);
-    }
-}
-class Shapes {
-    static circle(size) {
-        const points = new Array();
-        for (var angle = 0; angle < 360; angle += 9) {
-            var v = p5.Vector.fromAngle(radians(angle - 135));
-            v.mult(size);
-            points.push(v);
-        }
-        return points;
-    }
-    static square(size) {
-        const points = new Array();
-        for (var x = -size; x < size; x += 10) {
-            points.push(createVector(x, -size));
-        }
-        for (var y = -size; y < size; y += 10) {
-            points.push(createVector(size, y));
-        }
-        for (var x = size; x > -size; x -= 10) {
-            points.push(createVector(x, size));
-        }
-        for (var y = size; y > -size; y -= 10) {
-            points.push(createVector(-size, y));
-        }
-        return points;
-    }
-    static star(x, y, radius1, radius2, npoints) {
-        var angle = TWO_PI / npoints;
-        var halfAngle = angle / 2.0;
-        const points = new Array();
-        for (var a = 0; a < TWO_PI; a += angle) {
-            var sx = x + cos(a) * radius2;
-            var sy = y + sin(a) * radius2;
-            points.push(createVector(sx, sy));
-            sx = x + cos(a + halfAngle) * radius1;
-            sy = y + sin(a + halfAngle) * radius1;
-            points.push(createVector(sx, sy));
-        }
-        return points;
     }
 }
 const linearSeperable = (p) => {
